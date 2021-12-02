@@ -27,23 +27,23 @@
 
 int main(int argc, char* argv[]){
 	
-	if ((argc < 2) || (argc > 3)){	//proper usage check
-		printf("Usage: %s hostname port(optional)\n", argv[0]);
-		return 0;
-	}
-	
-	char* type = argv[1];
-	char* port = "7000";
-	
-	if (argc == 3){	//is port specified?
-		port = argv[2];
-	}
-	
-	//declarations
-	int sockfd, s;
-	struct addrinfo hints, *result;
-	
-	memset(&hints, 0, sizeof hints);
+    if ((argc < 2) || (argc > 3)){	//proper usage check
+	printf("Usage: %s hostname port(optional)\n", argv[0]);
+	return 0;
+    }
+    
+    char* type = argv[1];
+    char* port = "7000";
+    
+    if (argc == 3){	//is port specified?
+	port = argv[2];
+    }
+    
+    //declarations
+    int sockfd, s;
+    struct addrinfo hints, *result;
+    
+    memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; 
     hints.ai_socktype = SOCK_STREAM;
 	
@@ -55,32 +55,32 @@ int main(int argc, char* argv[]){
     }
 	
 	//create socket
-	if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
+    if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
     {
-		perror("Socket call failed");
-		exit(1);
+	perror("Socket call failed");
+	exit(1);
     }
 	
-	//connect socket
-	if (connect(sockfd, result->ai_addr, result->ai_addrlen) == -1)
-	{
-		perror("Connect call failed");
-		exit(1);
-	}
-	freeaddrinfo(result);
+    //connect socket
+    if (connect(sockfd, result->ai_addr, result->ai_addrlen) == -1)
+    {
+	perror("Connect call failed");
+	exit(1);
+    }
+    freeaddrinfo(result);
+    
+    char *received = malloc(sizeof(char));
+    //char *received = "hello";
+    
+    recv(sockfd, received, sizeof(received), 0);
+    //send(sockfd, received, sizeof(received), 0);
+    
+    printf("Received from server: %c\n", received);
+    //printf("Sent to server: %s\n", received);
+    
+    close(sockfd);
 	
-	char *received = malloc(sizeof(char));
-	//char *received = "hello";
-  
-	recv(sockfd, received, sizeof(received), 0);
-	//send(sockfd, received, sizeof(received), 0);
+    free(received);
 	
-	printf("Received from server: %c\n", received);
-	//printf("Sent to server: %s\n", received);
-	
-	close(sockfd);
-	
-	free(received);
-	
-	return 0;
+    return 0;
 }
