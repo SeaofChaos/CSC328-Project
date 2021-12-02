@@ -19,8 +19,8 @@ int newsockfd;
 
 int main(int argc, char **argv)
 {
-  char *newmsg = malloc(sizeof(MAXLINE));
-  char *msg ="abcdefghijklmnop";
+  //char *newmsg = malloc(sizeof(char)*20);
+  char msg ='b';
   int PORT = 7011;
   int   sockfd, rv;
   struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
@@ -81,17 +81,19 @@ int main(int argc, char **argv)
       
       if (pid == 0)
 	{
-	  rv = send(sockfd, msg,MAXLINE, 0); // attempt to send char string 
+	  rv = send(newsockfd, &msg, 1, 0); // attempt to send char string 
 	  if (rv < 0)
 	    perror("Error sending to socket");
-	  rv = recv(sockfd, newmsg,MAXLINE,0); // attempt to receive
+	  rv = recv(newsockfd, &msg, 1,0); // attempt to receive
 	  if (rv < 0)
 	    perror("Error receiving from socket");
-	  printf("%s\n",newmsg); // print number of connections to server 
+	  printf("%c\n",msg); // print number of connections to server 
 	  close(newsockfd);
+	  
 	  exit(0);
 	}   // end child process
       
+	  
       // parent doesn't need newsockfd
       close(newsockfd);
       numChild++;
@@ -107,7 +109,3 @@ int main(int argc, char **argv)
   }  // end while
   
 }
-
-
-
-
