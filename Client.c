@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////
 // 	Author: 		Ryan Quinn
 // 	Major: 			Computer Science
-//	Creation Date:	November 30, 2021
+//	Creation Date:		November 30, 2021
 //	Due Date: 		December 2, 2021
 // 	Course: 		CSC328 010
 //	Professor:		Dr. Frye
