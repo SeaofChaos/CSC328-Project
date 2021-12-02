@@ -50,8 +50,8 @@ int main(int argc, char* argv[]){
 	//get IP address from hostname
 	if ((s = getaddrinfo(argv[1], port, &hints , &result)) != 0) 
 	{
-    	perror("Error getting dns");
-    	exit(1);
+    		perror("Error getting dns");
+    		exit(1);
 	}
 	
 	//create socket
@@ -72,8 +72,12 @@ int main(int argc, char* argv[]){
 	char *received = malloc(sizeof(char));
 	//char *received = "hello";
 	
-	recv(sockfd, received, sizeof(received), 0);
-	//send(sockfd, received, sizeof(received), 0);
+	if (recv(sockfd, received, sizeof(received), 0) < 0){
+		printf("Unable to read data from server");
+	}
+	//if (send(sockfd, received, sizeof(received), 0) < 0){
+	//	printf("Unable to send data to server);
+	//}
 	
 	printf("Received from server: %c\n", received);
 	//printf("Sent to server: %s\n", received);
