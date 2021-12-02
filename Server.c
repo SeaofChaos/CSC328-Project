@@ -32,9 +32,9 @@ int main(int argc, char **argv)
       printf("\nusage: %s <number of rounds> <port number>(optional) \n\n", argv[0]);
       exit(1);
     }
-  int numRounds = *argv[1];
+  int numRounds = *argv[1]; // set number of rounds 
   
-  if (argv[2] != NULL)
+  if (argv[2] != NULL) // Set port if user entered 2nd CLA
     {
       PORT = *argv[1];
     }
@@ -81,13 +81,13 @@ int main(int argc, char **argv)
       
       if (pid == 0)
 	{
-	  rv = send(sockfd, msg,MAXLINE, 0);
+	  rv = send(sockfd, msg,MAXLINE, 0); // attempt to send char string 
 	  if (rv < 0)
 	    perror("Error sending to socket");
-	  rv = recv(sockfd, newmsg,MAXLINE,0);
+	  rv = recv(sockfd, newmsg,MAXLINE,0); // attempt to receive
 	  if (rv < 0)
 	    perror("Error receiving from socket");
-	  printf("%s\n",newmsg);
+	  printf("%s\n",newmsg); // print number of connections to server 
 	  close(newsockfd);
 	  exit(0);
 	}   // end child process
@@ -105,9 +105,9 @@ int main(int argc, char **argv)
 	else
 	  numChild--;
   }  // end while
-  printf("%d",numChild);
   
 }
+
 
 
 
