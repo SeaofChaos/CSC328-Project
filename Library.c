@@ -1,9 +1,16 @@
 
-//check that port given is valid
+/*************************************************************************/
+/* */
+/* Function name: checkPort */
+/* Description: Checks that the given port is valid */
+/* int givenPort: the port the user supplied */
+/* Return Value: int - the port given if valid or a defualt port if it is invalid  */
+/* */
+/*************************************************************************/
 int checkPort(int givenPort)
 {
     if(givenPort<1024||givenPort>49151)
-        return 7011;
+        return defaultPort();
  
     else 
         return givenPort;
