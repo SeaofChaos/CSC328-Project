@@ -16,12 +16,24 @@ int checkPort(int givenPort)
         return givenPort;
 }
 
-
+/*************************************************************************/
+/* */
+/* Function name: defaultPort */
+/* Description: returns a valid port number*/
+/* Return Value: int -a port number  */
+/* */
+/*************************************************************************/
 int defaultPort()
 {
 return 7011;
 }
 
+/*************************************************************************/
+/* */
+/* Function name: socketFail */
+/* Description: prints error then exits*/
+/* */
+/*************************************************************************/
 void socketFail()
 {
 		perror("Socket call failed");
@@ -44,6 +56,7 @@ char *  sendFail(char *send)
 		printf("Unable to send data to server"); 
 }
 
+
 void createSock()
 {
 	if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
@@ -54,15 +67,5 @@ void createSock()
 }
 
 
-void createVars()
-{
-char *received = malloc(50);	
-char *toSend = malloc(50);	
-}
-
-void freeVars()
-{
-close(sockfd);
-free(toSend)	
-free(received);
+);
 }
