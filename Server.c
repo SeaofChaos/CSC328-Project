@@ -11,23 +11,41 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/wait.h>
-
+ 
 #include "Library.c"
 
 #define SIZE sizeof(struct sockaddr_in)
 #define MAXLINE 512
+#define READ      0
+#define WRITE     1
+
 
 int newsockfd;
 
 int main(int argc, char **argv)
 {
-  char newmsg[50];
-  char *msg = "pingus";
+  char *uniq = malloc(sizeof(char)*5);
+  char nick1[50],nick2[50];
+  int p2c[2], c2p[2];
+  char nick[50];
+  char *ready = "READY";
   int PORT = 7006;
-  int   sockfd, rv;
+  int sockfd, rv;
   struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   int pid;
   int numChild = 0;
+  
+    // Create a pipe to send data parent to child
+  if (pipe(p2c) < 0) {
+    perror("Error creating pipe for parent to child:");
+    exit(-1);
+  }   // end if
+
+  // Create a second pipe to send data child to  parent
+  if (pipe(c2p) < 0) {
+    perror("Error creating pipe for child to parent:");
+    exit(-1);
+  }   // end if
   
   if (argc < 2) //usage clause
     {
@@ -64,48 +82,100 @@ int main(int argc, char **argv)
   
   for (;;)
     {
-      // accept connection
-      // if returns an EINTR (interrupted system call) then can re-call
-      while (((newsockfd = accept(sockfd, NULL, NULL)) == -1) &&
-	     (errno == EINTR));
-      if (newsockfd == -1)
-	{
-	  perror("accept call failed");
-	  exit(-1);
-	}   // end if
-      
-      // spawn a child to deal with the connection
-      if ((pid = fork()) == -1)
-	{
-	  perror("fork failed");
-	  exit(-1);
-	}   // end if
-      
-      if (pid == 0)
-	{
-	  rv = send(newsockfd, msg, 50, 0); // attempt to send char string 
-	  if (rv < 0)
-	    perror("Error sending to socket");
-	  rv = recv(newsockfd, newmsg, sizeof(newmsg),0); // attempt to receive
-	  if (rv < 0)
-	    perror("Error receiving from socket");
-	  printf("%s\n",newmsg); // print number of connections to server 
-	  close(newsockfd);
+      while (numChild < 2) //keep the server to 2 connections
+		{
+			// accept connection
+			// if returns an EINTR (interrupted system call) then can re-call
+			while (((newsockfd = accept(sockfd, NULL, NULL)) == -1) &&
+				(errno == EINTR));
+			if (newsockfd == -1)
+			{	
+				perror("accept call failed");
+				exit(-1);
+			}   // end if
 	  
-	  exit(0);
-	}   // end child process
+			// spawn a child to deal with the connection
+			if ((pid = fork()) == -1)
+			{
+				perror("fork failed");
+				exit(-1);
+			}   // end if
 	  
-      // parent doesn't need newsockfd
-      close(newsockfd);
-      numChild++;
-      printf("%d\n",numChild);
-    }   // end for
-  
-  // basic wait for all the children created
-  while (numChild > 0) {
-	if (wait(NULL) < -1)
-	  perror("Error in wait: ");
-	else
-	  numChild--;
-  }  // end while
+			if (pid == 0) // CHILD Process
+			{
+				close(p2c[WRITE]);//close unneeded pipes
+				close(c2p[READ]);
+			
+			
+				rv = send(newsockfd, ready, 50, 0); // send ready string 
+				if (rv < 0)
+					perror("Error sending to socket");
+	     
+				rv = recv(newsockfd, nick, 50,0); // receive nickname from client
+				if (rv < 0)
+					perror("Error receiving from socket");
+				write(c2p[WRITE], &nick, 50);  // write nickname to parent
+				read(p2c[READ], uniq, 5); //read uniqueness response
+				while (uniq != "READY")
+				{
+					rv = send(newsockfd, uniq, 5, 0); // send uniq response to client
+					if (rv < 0)
+						perror("Error sending to socket");
+					rv = recv(newsockfd, nick, 50,0); // receive nickname from client
+					if (rv < 0)
+						perror("Error receiving from socket");
+					write(c2p[WRITE], &nick, 50);  // write nickname to parent
+					read(p2c[READ], uniq, 5); //read uniqueness response
+				}
+			
+				close(newsockfd);
+				exit(0);
+			}   // end child process
+		  
+			if (pid > 0) // PARENT Process 
+			{
+				// parent doesn't need newsockfd
+				close(newsockfd);
+				close(p2c[READ]); //close unneeded pipes
+				close(c2p[WRITE]);
+			
+				while (strcmp(uniq, "READY") != 0)
+				{
+					rv = read(c2p[READ], &nick1, 50); //read nickname from client 1
+					if (rv < 0)
+						perror("Error reading from socket");
+					rv = read(c2p[READ], &nick2, 50); // read nickname from client 2
+					if (rv < 0)
+						perror("Error reading from socket");
+					rv = strcmp(nick1, nick2); // check uniqueness 
+					if (rv == 0) // send ready if unique
+					{
+						uniq = "READY"; 
+						rv = write(p2c[WRITE], uniq, 5);
+						if (rv < 0)
+							perror("Error writing to socket");
+						uniq = "";
+					}
+					else //send retry if not unique
+					{
+						uniq = "RETRY";
+						rv = write(p2c[WRITE], uniq, 5);
+						if (rv < 0)
+							perror("Error writing to socket");
+					}
+			
+				}	
+				while (numChild > 0) {
+				if (wait(NULL) < -1)
+					perror("Error in wait: ");
+				else
+					numChild--;
+			
+				close(p2c[WRITE]);
+				close(c2p[READ]);
+			}
+		}
+	}   // end for
+      
+    }  // end while
 }
