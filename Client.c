@@ -82,6 +82,7 @@ int main(int argc, char* argv[]){
 	//declarations
 	int sockfd, s;
 	struct addrinfo hints, *result;
+	char received[50];
 	
 	memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; 
@@ -109,17 +110,21 @@ int main(int argc, char* argv[]){
 	}
 	freeaddrinfo(result);
 	
+	printf("Waiting for READY...");
+	if (recv(sockfd, &received, sizeof(received), 0) < 0){
+		printf("Unable to read data from server\n");
+	}
+	printf("READY received");
 	
 	char keepPlaying = 'y';
 	
 	while (keepPlaying == 'y'){  //game loop
-		char received[50];
 		char *toSend[50];
 		
 		getNickName(sockfd); //gets a unique nickname
-		
+		keepPlaying = 'n';
 		//keep running until "SCORE" is received
-		while (strcmp(received, "SCORE") != 0){
+		/*while (strcmp(received, "SCORE") != 0){
 			//waiting for "GO"
 			while(1){
 				if (recv(sockfd, &received, sizeof(received), 0) < 0){
@@ -136,8 +141,8 @@ int main(int argc, char* argv[]){
 				printf("Unable to read data from server\n");
 			}
 		}
-		
-		printf("Would you like to play again? (y/n): ");
+		*/
+		/*printf("Would you like to play again? (y/n): ");
 		scanf("%c", toSend);
 		
 		if (send(sockfd, toSend, 1, 0) < 0){
@@ -147,7 +152,7 @@ int main(int argc, char* argv[]){
 		//receives char for keepPlaying, 'y' being to keep going, 'n' to stop
 		if (recv(sockfd, &keepPlaying, 1, 0) < 0){
 			printf("Unable to read data from server\n");
-		}
+		}*/
 		//printf("Received from server: %s\n", received);
 	}
 	close(sockfd);
