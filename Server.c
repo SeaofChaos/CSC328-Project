@@ -106,7 +106,6 @@ for (;;)
 			newsockfd = accept(sockfd, NULL, NULL);
 			if (newsockfd == -1)
 			{
-				numChild++;
 				perror("accept call failed");
 				exit(-1);
 			}   // end if
