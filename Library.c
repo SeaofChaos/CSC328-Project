@@ -50,14 +50,19 @@ char *  sendFail()
 }
 
 
-char *  receiveFail(char *send)
+char *  send(char * toSend)
 {	
-	perror("Failed to receive message");
-	exit(1); 
+	int rv = send(newsockfd, ready, 50, 0); // send ready string 
+	      if (rv < 0)
+		perror("Error sending to socket");
+	      
+	      rv = recv(newsockfd, toSend, 50,0); // receive nickname from client
+	      if (rv < 0)
+		perror("Error receiving from socket");
 }
 
 
-void createSock()
+void createSock(int sockfd)
 {
 	if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
 		socketFail()
