@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	char* type = argv[1];
-	char* port = atoi(getDefaultPort());
+	char* port = "7006";
 	
 	if (argc == 3){	//is port specified?
 		port = argv[2];
