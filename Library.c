@@ -36,24 +36,24 @@ return 7011;
 /*************************************************************************/
 void socketFail()
 {
-		perror("Socket call failed");
-		exit(1);
+	perror("Socket call failed");
+	exit(1);
 }
 
 
 
-char *  receiveFail()
+char *  sendFail()
 {
-	if (recv(sockfd, received, sizeof(received), 0) < 0)
-		printf("Unable to read data from server");
+	perror("Failed to send message");
+	exit(1);
 	
 }
 
 
-char *  sendFail(char *send)
-{
- 	if (send(sockfd, toSend, sizeof(toSend), 0) < 0)
-		printf("Unable to send data to server"); 
+char *  receiveFail(char *send)
+{	
+	perror("Failed to receive message");
+	exit(1); 
 }
 
 
