@@ -25,6 +25,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "Library.c"
+
 int main(int argc, char* argv[]){
 	
 	if ((argc < 2) || (argc > 3)){	//proper usage check
@@ -33,7 +35,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	char* type = argv[1];
-	char* port = "7000";
+	char* port = atoi(getDefaultPort());
 	
 	if (argc == 3){	//is port specified?
 		port = argv[2];
@@ -69,23 +71,23 @@ int main(int argc, char* argv[]){
 	}
 	freeaddrinfo(result);
 	
-	char *received = malloc(sizeof(char));
-	char *toSend = "a";
+	char received[50];
+	//char *received;
+	char *toSend = "hello world";
 	//char *received = "hello";
 	
 	if (recv(sockfd, received, sizeof(received), 0) < 0){
 		printf("Unable to read data from server");
 	}
-	if (send(sockfd, toSend, sizeof(toSend), 0) < 0){
+	if (send(sockfd, toSend, 50, 0) < 0){
 		printf("Unable to send data to server");
 	}
 	
-	printf("Received from server: %c\n", received);
-	//printf("Sent to server: %s\n", received);
+	printf("Received from server: %s\n", received);
+	
+	
 	
 	close(sockfd);
-	
-	free(received);
 	
 	return 0;
 }
