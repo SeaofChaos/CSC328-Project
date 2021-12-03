@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   int p2c[2], c2p[2];
   char nick[50];
   char *ready = "READY";
-  int PORT = 7006;
+  int PORT = 7012;
   int sockfd, rv;
   struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   int pid;
@@ -80,29 +80,35 @@ int main(int argc, char **argv)
       exit(-1);
     }   // end if
   
-  for (;;)
-    {
-      while (numChild < 3) //keep the server to 2 connections
+  // spawn a child to deal with the connection
+	if ((pid = fork()) == -1)
 	{
-	  // accept connection
-	  // if returns an EINTR (interrupted system call) then can re-call
-	  while (((newsockfd = accept(sockfd, NULL, NULL)) == -1) &&
-		 (errno == EINTR));
-	  if (newsockfd == -1)
-	    {	
-	      perror("accept call failed");
-	      exit(-1);
-	    }   // end if
-	  
-	  // spawn a child to deal with the connection
-	  if ((pid = fork()) == -1)
-	    {
-	      perror("fork failed");
-	      exit(-1);
-	    }   // end if
-	  
+	    perror("fork failed");
+	    exit(-1);
+	}   // end if
+  
+for (;;)
+{
+    while (numChild < 2) //keep the server to 2 connections
+	{
 	  if (pid == 0) // CHILD Process
 	    {
+		if ((pid = fork()) == -1)
+		{
+			perror("fork failed");
+			exit(-1);
+		}   // end if
+			// accept connection
+		// if returns an EINTR (interrupted system call) then can re-call
+			//int numConnection = 0;
+			newsockfd = accept(sockfd, NULL, NULL);
+			if (newsockfd == -1)
+			{
+				numChild++;
+				perror("accept call failed");
+				exit(-1);
+			}   // end if
+			
 	      close(p2c[WRITE]);//close unneeded pipes
 	      close(c2p[READ]);
 	      
@@ -135,17 +141,17 @@ int main(int argc, char **argv)
 	      
 	      close(newsockfd);
 	      exit(0);
-	    }   // end child process
-	  }
-      if (pid > 0) // PARENT Process 
-	{
-	  // parent doesn't need newsockfd
-	  close(newsockfd);
-	  close(p2c[READ]); //close unneeded pipes
-	  close(c2p[WRITE]);
-	  
-	  while (strcmp(uniq, "READY") != 0)
-	    {
+			}	   // end child process
+		}
+		if (pid > 0) // PARENT Process 
+		{
+		  // parent doesn't need newsockfd
+		  close(newsockfd);
+		  close(p2c[READ]); //close unneeded pipes
+		  close(c2p[WRITE]);
+		  
+		  while (strcmp(uniq, "READY") != 0)
+			{
 	      rv = read(c2p[READ], &nick1, 50); //read nickname from client 1
 	      if (rv < 0)
 		perror("Error reading from socket");
@@ -178,8 +184,7 @@ int main(int argc, char **argv)
 	    
 	    close(p2c[WRITE]);
 	    close(c2p[READ]);
-	  }
-	}
+			}
+		}
     }   // end for
-  
 }
