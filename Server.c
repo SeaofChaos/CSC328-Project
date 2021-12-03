@@ -127,8 +127,8 @@ int main(int argc, char **argv)
 	      printf("Nickname received in child: %s\n", nick);
 	      
 	      write(c2p[WRITE], &nick, 50);  // write nickname to parent
-	      read(p2c[READ], uniq, 5); //read uniqueness response
-	      while (uniq != "READY")
+	      read(p2c[READ], &uniq, 5); //read uniqueness response
+	      while (strcmp(uniq, "READY") != 0)
 		{
 		  rv = send(newsockfd, uniq, 5, 0); // send uniq of RETRY response to client
 		  if (rv < 0)
@@ -137,7 +137,8 @@ int main(int argc, char **argv)
 		  if (rv < 0)
 		    perror("Error receiving from socket");
 		  write(c2p[WRITE], &nick, 50);  // write nickname to parent
-		  read(p2c[READ], uniq, 5); //read uniqueness response
+		  read(p2c[READ], &uniq, 5); //read uniqueness response
+		  printf("%s\n",uniq);
 		}
 	      rv = send(newsockfd, uniq, 5, 0); // send uniq of READY response to client
 	      if (rv < 0)
@@ -167,18 +168,19 @@ int main(int argc, char **argv)
 		perror("Error reading from socket");
 	      printf("Nickname2 received in parent: %s\n", nick2);
 	      rv = strcmp(nick1, nick2); // check uniqueness 
-	      if (rv == 0) // send ready if unique
-		{
-		  uniq = "READY"; 
-		  rv = write(p2c[WRITE], uniq, 5);
-		  if (rv < 0)
-		    perror("Error writing to socket");
-		  uniq = "";
-		}
-	      else //send retry if not unique
+	      if (rv == 0) // send retry if not unique
 		{
 		  uniq = "RETRY";
-		  rv = write(p2c[WRITE], uniq, 5);
+		  printf("%s\n",uniq);
+		  rv = write(p2c[WRITE], &uniq, 5);
+		  if (rv < 0)
+		    perror("Error writing to socket");
+		}
+	      else //send ready if unique
+		{
+		  uniq = "READY";
+		  printf("%s\n",uniq);     
+		  rv = write(p2c[WRITE], &uniq, 5);
 		  if (rv < 0)
 		    perror("Error writing to socket");
 		}
