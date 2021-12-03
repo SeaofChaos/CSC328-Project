@@ -23,8 +23,9 @@ int main(int argc, char **argv)
 {
   char newmsg[50];
   char *msg = "pingus";
-  char *PORT = getDefaultPort();;
+  int PORT = 7006;
   int   sockfd, rv;
+  struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   int pid;
   int numChild = 0;
   
@@ -37,12 +38,8 @@ int main(int argc, char **argv)
   
   if (argv[2] != NULL) // Set port if user entered 2nd CLA
     {
-      PORT = argv[1];
+      PORT = *argv[1];
     }
-	
-	printf("%d", atoi(PORT));
-	
-	struct sockaddr_in server = {AF_INET, atoi(PORT),INADDR_ANY};
   
   // set up the transport end point
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
