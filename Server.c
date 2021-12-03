@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   int p2c[2], c2p[2];
   char nick[50];
   char *ready = "READY";
-  int PORT = 7012;
+  int PORT = 7006;
   int sockfd, rv;
   struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   int pid;
@@ -86,18 +86,20 @@ int main(int argc, char **argv)
 	    perror("fork failed");
 	    exit(-1);
 	}   // end if
-  
+	if (pid != 0){
+		if ((pid = fork()) == -1)
+		{
+			perror("fork failed");
+			exit(-1);
+		}   // end if
+	}
+	
 for (;;)
 {
     while (numChild < 2) //keep the server to 2 connections
 	{
 	  if (pid == 0) // CHILD Process
 	    {
-		if ((pid = fork()) == -1)
-		{
-			perror("fork failed");
-			exit(-1);
-		}   // end if
 			// accept connection
 		// if returns an EINTR (interrupted system call) then can re-call
 			//int numConnection = 0;
@@ -119,7 +121,10 @@ for (;;)
 	      
 	      rv = recv(newsockfd, nick, 50,0); // receive nickname from client
 	      if (rv < 0)
-		perror("Error receiving from socket");
+			perror("Error receiving from socket");
+		
+			printf("Nickname received in child: %s\n", nick);
+		
 	      write(c2p[WRITE], &nick, 50);  // write nickname to parent
 	      read(p2c[READ], uniq, 5); //read uniqueness response
 	      while (uniq != "READY")
@@ -155,9 +160,11 @@ for (;;)
 	      rv = read(c2p[READ], &nick1, 50); //read nickname from client 1
 	      if (rv < 0)
 		perror("Error reading from socket");
+	printf("Nickname1 received in parent: %s\n", nick1);
 	      rv = read(c2p[READ], &nick2, 50); // read nickname from client 2
 	      if (rv < 0)
 		perror("Error reading from socket");
+	printf("Nickname2 received in parent: %s\n", nick2);
 	      rv = strcmp(nick1, nick2); // check uniqueness 
 	      if (rv == 0) // send ready if unique
 		{
