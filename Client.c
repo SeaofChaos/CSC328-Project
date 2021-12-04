@@ -1,21 +1,3 @@
-/////////////////////////////////////////////////////////////
-// 	Author: 		Ryan Quinn
-// 	Major: 			Computer Science
-//	Creation Date:	November 30, 2021
-//	Due Date: 		December 2, 2021
-// 	Course: 		CSC328 010
-//	Professor:		Dr. Frye
-//	Assignment:		RPS Project
-//	FileName:		Client.cpp
-//	
-//	Purpose:		This program will run the client side of a 
-//                  game of rock-paper-scissors that a user
-//                  interacts with. It only deals with
-//                  inputs and outputs of information to and
-//                  from the server.
-//
-//	How to compile:	make
-/////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +23,8 @@ void getNickName(int sockfd){
 		printf("Unable to read data from server\n");
 	}
 	
+	printf("\nReady or retry: %s\n", response);
+	
 	if (strcmp(response, "READY") != 0){
 		printf("\nNickname is not unique.\nPlease enter a new nickname.\n\n");
 		getNickName(sockfd);
@@ -60,9 +44,13 @@ void getRPS(int sockfd){
 		getRPS(sockfd);
 	}
 	
-	if (recv(sockfd, choice, sizeof(choice), 0) < 0){
+	if (send(sockfd, choice, sizeof(choice), 0) < 0){
 		printf("Unable to read data from server\n");
 	}
+	
+	/*if (recv(sockfd, choice, sizeof(choice), 0) < 0){
+		printf("Unable to read data from server\n");
+	}*/
 }
 
 int main(int argc, char* argv[]){
@@ -110,11 +98,11 @@ int main(int argc, char* argv[]){
 	}
 	freeaddrinfo(result);
 	
-	printf("Waiting for READY...");
+	printf("Waiting for READY...\n");
 	if (recv(sockfd, &received, sizeof(received), 0) < 0){
 		printf("Unable to read data from server\n");
 	}
-	printf("READY received");
+	printf("%s received\n\n", received);
 	
 	char keepPlaying = 'y';
 	
@@ -122,18 +110,15 @@ int main(int argc, char* argv[]){
 		char *toSend[50];
 		
 		getNickName(sockfd); //gets a unique nickname
-		keepPlaying = 'n';
+		
+		//waiting for "GO"
+		if (recv(sockfd, &received, sizeof(received), 0) < 0){
+			printf("Unable to read data from server\n");
+		}
+		printf("GO!\n");
+		
 		//keep running until "SCORE" is received
-		/*while (strcmp(received, "SCORE") != 0){
-			//waiting for "GO"
-			while(1){
-				if (recv(sockfd, &received, sizeof(received), 0) < 0){
-					printf("Unable to read data from server\n");
-				}
-				if (strcmp(received, "GO") == 0) //received "GO"
-					break;
-			}
-			
+		while (strcmp(received, "SCORE") != 0){
 			getRPS(sockfd);	//gets and sends an inputted move to server
 			
 			//get response from server, where "SCORE" will stop game
@@ -141,7 +126,7 @@ int main(int argc, char* argv[]){
 				printf("Unable to read data from server\n");
 			}
 		}
-		*/
+		keepPlaying = 'n';
 		/*printf("Would you like to play again? (y/n): ");
 		scanf("%c", toSend);
 		
