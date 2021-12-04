@@ -20,3 +20,8 @@ How to run the server:
 
 How to run the client: 
 > ./client [hostname] [port(optional)]
+
+
+/* needs manifest file/folder section here*/
+
+
