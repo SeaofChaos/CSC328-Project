@@ -24,4 +24,11 @@ How to run the client:
 
 /* needs manifest file/folder section here*/
 
+/* needs section for our defined protocol */
 
+Assumptions:
+  - Only two clients will be accepted at a time. 
+  - The two clients will stay connected through the entire game.
+  - Input guidelines on each prompt in the client will be followed (e.g. The user is expected to enter 
+        of the presented choices in lowercase "Enter rock, paper, or scissors in lowercase: ").
+  - 
