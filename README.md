@@ -66,14 +66,14 @@ How to run the client:
 ### Defined Protocol
 - TCP/IP
 
-### Assumptions:
+### Assumptions
   1. Only two clients will be accepted at a time. 
   2. The two clients will stay connected through the entire game.
   3. Input guidelines on each prompt in the client will be followed (e.g. The user is expected to enter 
         of the presented choices in lowercase "Enter rock, paper, or scissors in lowercase: ").
   4. 
 
-### Discussions throughout development process:
+### Discussions throughout development process
   - 
   
 ### Status
