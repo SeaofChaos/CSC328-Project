@@ -10,5 +10,13 @@
 //	Purpose:		This assignment contains a server/client program that runs
 //                  a game of rock paper scissors between two users.
 //
-//	How to compile:	make
 /////////////////////////////////////////////////////////////////////////////////
+
+How to compile:
+> make
+
+How to run the server: 
+> ./server [number of rounds] [port(optional)]
+
+How to run the client: 
+> ./client [hostname] [port(optional)]
