@@ -9,9 +9,16 @@
 
 #include "Library.c"
 
+char* tolowerString(char* str){
+	char *lower = malloc(sizeof(str));
+	for (int i=0; i<sizeof(str); ++i)
+		lower[i] = tolower(str[i]);
+	return lower;
+}
+
 void getNickName(int sockfd){
 	char nickname[50];
-	char response[6];
+	char response[50];
 	
 	printf("Choose a nickname (under 50 characters): ");
 	scanf("%s", nickname);
@@ -35,11 +42,13 @@ void getRPS(int sockfd){
 	char choice[8];
 	printf("Rock, paper, or scissors (type in lowercase): ");
     scanf("%s", choice);
-
+	tolowerString(choice);
+	printf("Inputted choice in lowercase: %s\n", choice);
+	
     if (strcmp(choice, "rock") != 0 && 
 			strcmp(choice, "paper") != 0 && 
 			strcmp(choice, "scissors")){
-				
+		
 		printf("\nInvalid choice, please enter \"rock\", \"paper\", or \"scissors\"\n\n");
 		getRPS(sockfd);
 	}
@@ -65,7 +74,7 @@ int main(int argc, char* argv[]){
 	
 	if (argc == 3){	//is port specified?
 		port = argv[2];
-	} 
+	}
 	
 	//declarations
 	int sockfd, s;
@@ -115,7 +124,7 @@ int main(int argc, char* argv[]){
 		if (recv(sockfd, &received, sizeof(received), 0) < 0){
 			printf("Unable to read data from server\n");
 		}
-		printf("GO!\n");
+		printf("received (looking for GO): %s!\n", received);
 		
 		//keep running until "SCORE" is received
 		while (strcmp(received, "SCORE") != 0){
@@ -125,6 +134,7 @@ int main(int argc, char* argv[]){
 			if (recv(sockfd, &received, sizeof(received), 0) < 0){
 				printf("Unable to read data from server\n");
 			}
+			printf("received: %s\n", received);
 		}
 		keepPlaying = 'n';
 		/*printf("Would you like to play again? (y/n): ");
