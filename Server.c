@@ -77,7 +77,7 @@ int main(int argc, char **argv)
       exit(-1);
     }   // end if
   
-  // spawn a child to deal with the connection
+  // spawn 2 childs to deal with the connections
   if ((pid = fork()) == -1)
     {
       perror("fork failed");
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 			
 			close(p2c[WRITE]);//close unneeded pipes
 			close(c2p[READ]);
-		  
+			
 			rv = send(newsockfd, ready, 50, 0); // send ready string 
 			if (rv < 0)
 				perror("Error sending to socket");
@@ -127,15 +127,19 @@ int main(int argc, char **argv)
 				if (rv < 0)
 					perror("Error receiving from socket");
 				
-				write(c2p[WRITE], &nick, 50);  // write nickname to parent
-				read(p2c[READ], &uniq, 5); //read uniqueness response
+				rv = write(c2p[WRITE], &nick, 50);  // write nickname to parent
+				if (rv < 0)
+						perror("Error writing to pipes");
+				rv = read(p2c[READ], &uniq, 5); //read uniqueness response
+				if (rv < 0)
+						perror("Error reading from pipes");
 			}
 			printf("About to send to client: %s\n", uniq);
 			rv = send(newsockfd, uniq, 5, 0); // send uniq of READY response to client
 			if (rv < 0)
 				perror("Error sending to socket");
 			
-			close(newsockfd);
+			//close(newsockfd);
 		}
 	  	else  // PARENT Process 
 		{
@@ -147,11 +151,11 @@ int main(int argc, char **argv)
 			{
 				rv = read(c2p[READ], &nick1, 50); //read nickname from client 1
 				if (rv < 0)
-					perror("Error reading from socket");
+					perror("Error reading from pipes");
 				
 				rv = read(c2p[READ], &nick2, 50); // read nickname from client 2
 				if (rv < 0)
-					perror("Error reading from socket");
+					perror("Error reading from pipes");
 				
 				printf("Nick1 received in parent: %s\n", nick1);
 				printf("Nick2 received in parent: %s\n", nick2);
@@ -163,32 +167,36 @@ int main(int argc, char **argv)
 					printf("%s\n",uniq);
 					rv = write(p2c[WRITE], &uniq, 5);
 					if (rv < 0)
-						perror("Error writing to socket");
+						perror("Error writing to pipes");
 					rv = write(p2c[WRITE], &uniq, 5);
 					if (rv < 0)
-						perror("Error writing to socket");
+						perror("Error writing to pipes");
 				}
 				else //send ready if unique
 				{
 					uniq = "READY";
-					printf("%s\n",uniq);     
+					printf("%s\n",uniq);
 					rv = write(p2c[WRITE], &uniq, 5);
 					if (rv < 0)
-						perror("Error writing to socket");
+						perror("Error writing to pipes");
 					rv = write(p2c[WRITE], &uniq, 5);
 					if (rv < 0)
-						perror("Error writing to socket");
+						perror("Error writing to pipes");
 				}
 			}	
-			close(p2c[WRITE]);
-			close(c2p[READ]);
 		} //end else
     } //end for (game loop)
 	
 	if (pid == 0){
 		exit(0);
 	}
+	else{
+		close(p2c[WRITE]);
+		close(c2p[READ]);
+	}
 
 	if (wait(NULL) < -1)
 		perror("Error in wait: ");
+	
+	exit(0);
 } //end main
