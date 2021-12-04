@@ -1,3 +1,47 @@
+//0 draw 
+//1 p1 wins
+//2 p2 wins
+//4 failed to answer
+int decide(char* p1, char* p2)
+{
+    
+    if(strcmp(p1,p2)==0)
+        return 0;
+    
+    if(strcmp(p1, "rock")==0)
+    {
+        if((strcmp(p2, "paper"))==0)
+            return 2;
+            
+        if((strcmp(p2, "scissors"))==0)
+            return 1;
+    }
+    
+    if(strcmp(p1, "paper")==0)
+    {
+        if((strcmp(p2, "rock"))==0)
+            return 1;
+            
+        if((strcmp(p2, "scissors"))==0)
+            return 2;
+    }
+    
+    if(strcmp(p1, "scissors")==0)
+    {
+        if((strcmp(p2, "rock"))==0)
+            return 2;
+            
+        if((strcmp(p2, "paper"))==0)
+            return 1;
+    }
+    
+    
+    
+    return 4;
+}
+
+
+
 
 /*************************************************************************/
 /* */
