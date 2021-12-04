@@ -43,8 +43,8 @@ How to run the client:
 |       Client.c        |       Y       |           Y           |         Y         |
 |       Server.c        |       Y       |           Y           |         Y         |
 |       Library.c       |       Y       |           Y           |         Y         |
-|        readme         |       Y       |           Y           |         Y         |
-|       makefile        |       Y       |           Y           |         Y         |
+|        readme         |       Y       |           N           |         N         |
+|       makefile        |       Y       |           N           |         N         |
 | Updated Project Plan  |       Y       |           Y           |         Y         |
 
 ### Defined Protocol
