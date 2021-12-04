@@ -65,6 +65,7 @@ How to run the client:
 
 ### Defined Protocol
 - TCP/IP
+- *need information here*
 
 ### Assumptions
   1. Only two clients will be accepted at a time. 
@@ -74,7 +75,7 @@ How to run the client:
   4. 
 
 ### Discussions throughout development process
-  - 
+  - *need information here*
   
 ### Status
   - Currently, our client/server program can run an entire game of rock, paper, scissors between two clients.
