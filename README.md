@@ -1,11 +1,17 @@
-### ID BLOCK
+### ID Block
 ***
 Authors: 		Ryan Quinn, Cameron Christopher, Christian Kiriluk
+
 Major: 			Computer Science
+
 Creation Date:	November 30, 2021
+
 Due Date: 		December 2, 2021
+
 Course: 		CSC328
+
 Professor:		Dr. Frye
+
 Assignment:		RPS Project
 
 Purpose:		This assignment contains a server/client program that runs
@@ -28,6 +34,7 @@ How to run the client:
 > ./client [hostname] [port(optional)]
 ```
 
+### Manifest files/folders
 /* needs manifest file/folder section here*/
 
 ### Responsibility Matrix
@@ -40,6 +47,7 @@ How to run the client:
 |       makefile        |       Y       |           Y           |         Y         |
 | Updated Project Plan  |       Y       |           Y           |         Y         |
 
+### Defined Protocol
 /* needs section for our defined protocol */
 
 ### Assumptions:
