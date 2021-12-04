@@ -24,9 +24,8 @@ int main(int argc, char **argv)
   char *uniq;
   char nick[50];
   char *ready = "READY";
-  int PORT = 7006;
+  int PORT = 7008;
   int sockfd, rv;
-  struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   int numChild = 0;
   
   if (argc < 2) //usage clause
@@ -38,8 +37,10 @@ int main(int argc, char **argv)
   printf("numRounds: %d\n", numRounds);
   if (argv[2] != NULL) // Set port if user entered 2nd CLA
     {
-      PORT = *argv[1];
+      PORT = atoi(argv[2]);
     }
+  
+  struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   
   // set up the transport end point
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -65,7 +66,7 @@ int main(int argc, char **argv)
 	for (;;)
     {
 		int scoreP1,scoreP2;
-		char uniq[5];
+		char uniq[50];
 		char nick1[50],nick2[50];
 		int pid;
 		int newsockfd;
@@ -112,67 +113,96 @@ int main(int argc, char **argv)
 			close(p2c[WRITE]); //close unneeded pipes
 			close(c2p[READ]);
 			
-			rv = send(newsockfd, ready, 50, 0); // send ready string 
+			rv = send(newsockfd, ready, sizeof(ready), 0); // send ready string 
 			if (rv < 0)
 				perror("Error sending to socket1");
 		  
-			rv = recv(newsockfd, nick, 50,0); // receive nickname from client
+			rv = recv(newsockfd, nick, sizeof(nick),0); // receive nickname from client
 			if (rv < 0)
 				perror("Error receiving from socket2");
 		  
 			printf("Nickname received in child: %s\n", nick);
-		  
-			write(c2p[WRITE], &nick, 50);  // write nickname to parent
-			read(p2c[READ], &uniq, 5); //read uniqueness response
+			
+			rv = write(c2p[WRITE], &nick, sizeof(nick));  // write nickname to parent
+			if (rv < 0)
+				perror("Error writing to parent pipe2");
+			read(p2c[READ], &uniq, sizeof(uniq)); //read uniqueness response
+			if (rv < 0)
+				perror("Error reading from parent pipe2");
+			
+			printf("uniq: %s\n", uniq);
+			
+			printf("value: %d\n", strcmp(uniq, "READY"));
+			
 			while (strcmp(uniq, "READY") != 0)
 			{
-				rv = send(newsockfd, uniq, 5, 0); // send uniq of RETRY response to client
+				printf("hello\n");
+				rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of RETRY response to client
 				if (rv < 0)
 					perror("Error sending to socket3");
-				rv = recv(newsockfd, nick, 50,0); // receive nickname from client
+				printf("goo\n");
+				rv = recv(newsockfd, nick, sizeof(nick),0); // receive nickname from client
 				if (rv < 0)
 					perror("Error receiving from socket4");
-				
-				rv = write(c2p[WRITE], &nick, 50);  // write nickname to parent
+				printf("poopy\n");
+				rv = write(c2p[WRITE], &nick, sizeof(nick));  // write nickname to parent
 				if (rv < 0)
 						perror("Error writing to pipes5");
-				rv = read(p2c[READ], &uniq, 5); //read uniqueness response
+				printf("mommy\n");
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read uniqueness response
 				if (rv < 0)
 						perror("Error reading from pipes6");
+				//printf("About to send to client: READY\n");
+				
+				rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of READY response to client
+				if (rv < 0)
+					perror("Error sending to socket7");
 			}
-			
+			//sleep(0.5);
+			/*rv = write(c2p[WRITE], &uniq, sizeof(uniq));  // write nickname to parent
+			if (rv < 0)
+				perror("Error sending to socket7");
+			*/
 			//i don't know why this printf doesn't print, but we don't talk worry about it
 			//because it works :)
-			printf("About to send to client: READY\n");
+			printf("About to send to client: %s\n", uniq);
 			
-			rv = send(newsockfd, "READY", 5, 0); // send uniq of READY response to client
+			rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of READY response to client
 			if (rv < 0)
 				perror("Error sending to socket7");
 			
 			printf("Got past sending READY to client\n");
 			
-			rv = send(newsockfd, "GO", 2, 0); // send GO to client - Ready for RPS selection
-                if (rv < 0)
-                    perror("Error sending to socket");
+			//writing message back to parent that one child has received message
+			rv = write(c2p[WRITE], "RECEIVED", 9);  // write nickname to parent
+				if (rv < 0)
+						perror("Error writing to pipes5");
 			
 			//play game
-            /*for (int x = 0; x < numRounds; x++) {
+            for (int x = 0; x < numRounds; x++) {
                 //char* go = "GO";
-                rv = send(newsockfd, "GO", 2, 0); // send GO to client - Ready for RPS selection
-                if (rv < 0)
-                    perror("Error sending to socket");
-                char choice[8];
-                rv = recv(newsockfd, choice, 8, 0); // receive choice from client
+				printf("About to send 'GO'\n");
+				rv = send(newsockfd, "GO", 3, 0); // send GO to client - Ready for RPS selection
+				if (rv < 0)
+					perror("Error sending to socket");
+				printf("Sent 'GO'\n");
+				
+                char choice[50];
+                rv = recv(newsockfd, choice, sizeof(choice), 0); // receive choice from client
                 if (rv < 0)
                     perror("Error receiving from socket");
-                rv = write(c2p[WRITE], choice, 8); //pipe choice to parent
+				printf("Choice received from client: %s\n", choice);
+                /*rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
+                if (rv < 0)
+                    perror("Error receiving from socket");
+				
                 if (rv < 0)
                     perror("Error writing to socket");
                 if (x < numRounds)
-                    send(newsockfd, "NEXT ROUND", 10, 0);
+                    send(newsockfd, "NEXT ROUND", 11, 0);
                 else
-                    send(newsockfd, "SCORE", 10, 0);
-            }*/
+                    send(newsockfd, "SCORE", 6, 0);*/
+            }
 			
 			close(p2c[READ]); //close unneeded pipes
 			close(c2p[WRITE]);
@@ -185,14 +215,15 @@ int main(int argc, char **argv)
 			close(p2c[READ]); //close unneeded pipes
 			close(c2p[WRITE]);
 			
+			char *toSend = malloc(sizeof(char)*10);
 			int isReady = 0;
 			while (isReady != 1)
 			{
-				rv = read(c2p[READ], &nick1, 50); //read nickname from client 1
+				rv = read(c2p[READ], &nick1, sizeof(nick1)); //read nickname from client 1
 				if (rv < 0)
 					perror("Error reading from pipes12");
 				
-				rv = read(c2p[READ], &nick2, 50); // read nickname from client 2
+				rv = read(c2p[READ], &nick2, sizeof(nick2)); // read nickname from client 2
 				if (rv < 0)
 					perror("Error reading from pipes13");
 				
@@ -202,27 +233,30 @@ int main(int argc, char **argv)
 				rv = strcmp(nick1, nick2); // check uniqueness 
 				if (rv == 0) // send retry if not unique
 				{
-					rv = write(p2c[WRITE], "RETRY", 5);
-					if (rv < 0)
-						perror("Error writing to pipes14");
-					rv = write(p2c[WRITE], "RETRY", 5);
-					if (rv < 0)
-						perror("Error writing to pipes15");
+					toSend = "RETRY";
+					for (int i=0; i<2; i++){
+						printf("About to send: %s\n", toSend);
+						rv = write(p2c[WRITE], toSend, sizeof(toSend));
+						if (rv < 0)
+							perror("Error writing to pipes14");
+					}
 				}
 				else //send ready if unique
 				{
+					toSend = "READY";
 					isReady = 1;
-					rv = write(p2c[WRITE], "READY", 5);
-					if (rv < 0)
-						perror("Error writing to pipes16");
-					rv = write(p2c[WRITE], "READY", 5);
-					if (rv < 0)
-						perror("Error writing to pipes17");
+					for (int i=0; i<2; i++){
+						//printf("About to send: %s\n", toSend);
+						rv = write(p2c[WRITE], toSend, sizeof(toSend));
+						if (rv < 0)
+							perror("Error writing to pipes15");
+						rv = read(c2p[READ], &nick1, sizeof(nick1)); //read nickname from client 1
+					}
 				}
 			}
 			
-			for (int x = 0; x < numRounds; x++) {
-                char* c1, * c2;
+			/*for (int x = 0; x < numRounds; x++) {
+                char c1[8], c2[8];
                 rv = read(c2p[READ], c1, 8);
                 if (rv < 0)
                     perror("Error reading from pipes");
@@ -243,8 +277,8 @@ int main(int argc, char **argv)
                         printf("Round Canceled: Invalid Entry");
                         break;
                 }
-            }
-			
+            }*/
+			//free(toSend);
 			close(p2c[WRITE]);
 			close(c2p[READ]);
 		} //end else
