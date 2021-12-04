@@ -35,7 +35,23 @@ How to run the client:
 ```
 
 ### Manifest files/folders
-/* needs manifest file/folder section here*/
+1. Client.c
+    - The client program is used to connect to the server and interacts with the user
+      to run the game properly. Once it receives information from the user, it sends
+      it to the server.
+2. Server.c
+    - Contains the server code which, once compiled and executed, will open a daemon
+      server and constantly listen for connections. Once two client connections are
+      accepted, it will run the code for the game. When the game is finished, it closes
+      the sockets connecting the clients and will wait for two more connections to run
+      again.
+3. Library.c
+    - The library code which is used between both programs. Some common functionality
+      includes error checking on sockets, sending/receiving information, and creating
+      default values which are shared between the programs, like the default port.
+4. makefile
+    - The makefile allows for all the program files to be compiled in the proper order
+      by inputting the command "make".
 
 ### Responsibility Matrix
 |                       |  Ryan  Quinn  |  Cameron Christopher  | Christian Kiriluk |
