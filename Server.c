@@ -139,7 +139,6 @@ int main(int argc, char **argv)
 				perror("Error sending to socket");
 			
 			close(newsockfd);
-			exit(0);
 		}
 	  	else  // PARENT Process 
 		{
@@ -190,6 +189,10 @@ int main(int argc, char **argv)
 		} //end else
     } //end for (game loop)
 	
+	if (pid == 0){
+		exit(0);
+	}
+
 	if (wait(NULL) < -1)
 		perror("Error in wait: ");
 } //end main
