@@ -64,7 +64,7 @@ How to run the client:
 | Updated Project Plan  |       Y       |           Y           |         Y         |
 
 ### Defined Protocol
-/* needs section for our defined protocol */
+- TCP/IP
 
 ### Assumptions:
   1. Only two clients will be accepted at a time. 
