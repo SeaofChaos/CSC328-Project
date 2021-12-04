@@ -18,9 +18,6 @@
 #define MAXLINE 512
 #define READ      0
 #define WRITE     1
-
-
-int newsockfd;
  
 int main(int argc, char **argv)
 {
@@ -99,7 +96,7 @@ int main(int argc, char **argv)
 		if (pid == 0) // CHILD Process
 		{
 			// accept connection
-			newsockfd = accept(sockfd, NULL, NULL);
+			int newsockfd = accept(sockfd, NULL, NULL);
 			if (newsockfd == -1)
 			{
 				perror("accept call failed");
@@ -143,7 +140,6 @@ int main(int argc, char **argv)
 	  	else  // PARENT Process 
 		{
 			// parent doesn't need newsockfd
-			close(newsockfd);
 			close(p2c[READ]); //close unneeded pipes
 			close(c2p[WRITE]);
 		  
