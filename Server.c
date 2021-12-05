@@ -65,9 +65,9 @@ int main(int argc, char **argv)
 	
 	for (;;)
     {
-		int scoreP1,scoreP2;
+		int scoreP1 = 0, scoreP2 = 0;
 		char uniq[50];
-		char nick1[50],nick2[50];
+		char nick1[50], nick2[50];
 		int pid;
 		int newsockfd;
 		int p2c[2], c2p[2];
@@ -180,9 +180,9 @@ int main(int argc, char **argv)
 			
 			//play game
             for (int x = 0; x < numRounds; x++) {
-                //char* go = "GO";
+                char* goString = "GO";
 				printf("About to send 'GO'\n");
-				rv = send(newsockfd, "GO", 3, 0); // send GO to client - Ready for RPS selection
+				rv = send(newsockfd, goString, sizeof(goString), 0); // send GO to client - Ready for RPS selection
 				if (rv < 0)
 					perror("Error sending to socket");
 				printf("Sent 'GO'\n");
@@ -192,16 +192,28 @@ int main(int argc, char **argv)
                 if (rv < 0)
                     perror("Error receiving from socket");
 				printf("Choice received from client: %s\n", choice);
-                /*rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
-                if (rv < 0)
-                    perror("Error receiving from socket");
 				
-                if (rv < 0)
-                    perror("Error writing to socket");
-                if (x < numRounds)
-                    send(newsockfd, "NEXT ROUND", 11, 0);
-                else
-                    send(newsockfd, "SCORE", 6, 0);*/
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent
+				if (rv < 0)
+					perror("Error writing to socket");
+				
+				rv = write(c2p[WRITE], nick, sizeof(nick)); //pipe choice to parent
+				if (rv < 0)
+					perror("Error writing to socket");
+				
+				rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
+				if (rv < 0)
+					perror("Error writing to socket");
+				if (x < numRounds)
+					send(newsockfd, "NEXT ROUND", 11, 0);
+				else{
+					send(newsockfd, "SCORE", 6, 0);
+					break;
+				}
+				
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+				if (rv < 0)
+					perror("Error writing to socket");
             }
 			
 			close(p2c[READ]); //close unneeded pipes
@@ -255,30 +267,59 @@ int main(int argc, char **argv)
 				}
 			}
 			
-			/*for (int x = 0; x < numRounds; x++) {
-                char c1[8], c2[8];
-                rv = read(c2p[READ], c1, 8);
+			for (int x = 0; x < numRounds; x++) {
+                char c1[10], c2[10];
+				char player1[50], player2[50];
+				
+				rv = write(p2c[WRITE], "PLAYER1", 8);
+                if (rv < 0)
+                    perror("Error writing to pipes");
+				rv = read(c2p[READ], player1, sizeof(player1));
                 if (rv < 0)
                     perror("Error reading from pipes");
-                rv = read(c2p[READ], c2, 8);
+				rv = read(c2p[READ], c1, sizeof(c1));
                 if (rv < 0)
                     perror("Error reading from pipes");
+                
+				rv = write(p2c[WRITE], "PLAYER2", 8);
+                if (rv < 0)
+                    perror("Error writing to pipes");
+				rv = read(c2p[READ], player2, sizeof(player2));
+                if (rv < 0)
+                    perror("Error reading from pipes");
+				rv = read(c2p[READ], c2, sizeof(c2));
+                if (rv < 0)
+                    perror("Error reading from pipes");
+				
+				printf("Player1 move: %s\nPlayer2 move: %s\n", c1, c2);
+				
                 int ref = decide(c1, c2);
                 switch (ref) { //scoring
                     case '0':
-                        break;
+                        printf("It's a tie.\n");
                     case '1':
-                        scoreP1++;
-                        break;
+						if (strcmp(player1, nick1) == 0){
+							printf("Player1 wins\n");
+							scoreP1++;
+						}
+						else{
+							scoreP2++;
+							printf("Player2 wins\n");
+						}
                     case '2':
-                        scoreP2++;
-                        break;
+                        if (strcmp(player1, nick1) == 0){
+							scoreP2++;
+							printf("Player2 wins\n");
+						}
+						else{
+							scoreP1++;
+							printf("Player1 wins\n");
+						}
                     case '4':
                         printf("Round Canceled: Invalid Entry");
                         break;
                 }
-            }*/
-			//free(toSend);
+            }
 			close(p2c[WRITE]);
 			close(c2p[READ]);
 		} //end else
