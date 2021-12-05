@@ -39,7 +39,7 @@ void getNickName(int sockfd){
 }
 
 void getRPS(int sockfd){
-	char choice[8];
+	char choice[10];
 	printf("Rock, paper, or scissors (type in lowercase): ");
     scanf("%s", choice);
 	tolowerString(choice);
@@ -47,7 +47,7 @@ void getRPS(int sockfd){
 	
     if (strcmp(choice, "rock") != 0 && 
 			strcmp(choice, "paper") != 0 && 
-			strcmp(choice, "scissors")){
+			strcmp(choice, "scissors") != 0){
 		
 		printf("\nInvalid choice, please enter \"rock\", \"paper\", or \"scissors\"\n\n");
 		getRPS(sockfd);
