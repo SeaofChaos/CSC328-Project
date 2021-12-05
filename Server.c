@@ -189,31 +189,26 @@ int main(int argc, char **argv)
 				
                 char choice[50];
                 rv = recv(newsockfd, choice, sizeof(choice), 0); // receive choice from client
-                if (rv < 0)
-                    perror("Error receiving from socket");
 				printf("Choice received from client: %s\n", choice);
 				
 				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent
-				if (rv < 0)
-					perror("Error writing to socket");
+				
+				printf("Read from parent pipe: %s\n", uniq);
 				
 				rv = write(c2p[WRITE], nick, sizeof(nick)); //pipe choice to parent
-				if (rv < 0)
-					perror("Error writing to socket");
 				
 				rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
-				if (rv < 0)
-					perror("Error writing to socket");
+				
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+				
+				printf("Read from parent pipe: %s\n", uniq);
+				
 				if (x < numRounds)
 					send(newsockfd, "NEXT ROUND", 11, 0);
 				else{
 					send(newsockfd, "SCORE", 6, 0);
 					break;
 				}
-				
-				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
-				if (rv < 0)
-					perror("Error writing to socket");
             }
 			
 			close(p2c[READ]); //close unneeded pipes
@@ -268,28 +263,36 @@ int main(int argc, char **argv)
 			}
 			
 			for (int x = 0; x < numRounds; x++) {
-                char c1[10], c2[10];
-				char player1[50], player2[50];
-				
-				rv = write(p2c[WRITE], "PLAYER1", 8);
-                if (rv < 0)
-                    perror("Error writing to pipes");
-				rv = read(c2p[READ], player1, sizeof(player1));
-                if (rv < 0)
-                    perror("Error reading from pipes");
-				rv = read(c2p[READ], c1, sizeof(c1));
-                if (rv < 0)
-                    perror("Error reading from pipes");
-                
-				rv = write(p2c[WRITE], "PLAYER2", 8);
-                if (rv < 0)
-                    perror("Error writing to pipes");
-				rv = read(c2p[READ], player2, sizeof(player2));
-                if (rv < 0)
-                    perror("Error reading from pipes");
-				rv = read(c2p[READ], c2, sizeof(c2));
-                if (rv < 0)
-                    perror("Error reading from pipes");
+					char c1[10], c2[10];
+					char player1[50], player2[50];
+					int playerNum = 1;
+					
+				for (int i=0; i<2; ++i){
+					if (playerNum == 1){
+						rv = write(p2c[WRITE], "PLAYER1", 8);
+						if (rv < 0)
+							perror("Error writing to pipes");
+						rv = read(c2p[READ], player1, sizeof(player1));
+						if (rv < 0)
+							perror("Error reading from pipes");
+						rv = read(c2p[READ], c1, sizeof(c1));
+						if (rv < 0)
+							perror("Error reading from pipes");
+					}
+					
+					if (playerNum == 2){
+						rv = write(p2c[WRITE], "PLAYER2", 8);
+						if (rv < 0)
+							perror("Error writing to pipes");
+						rv = read(c2p[READ], player2, sizeof(player2));
+						if (rv < 0)
+							perror("Error reading from pipes");
+						rv = read(c2p[READ], c2, sizeof(c2));
+						if (rv < 0)
+							perror("Error reading from pipes");
+					}
+					playerNum = 2;
+				}
 				
 				printf("Player1 move: %s\nPlayer2 move: %s\n", c1, c2);
 				
