@@ -176,17 +176,18 @@ int main(int argc, char **argv)
 			
 			//play game
             for (int x = 0; x < numRounds; x++) {
+				// send GO to client - Ready for RPS selection
                 char* goString = "GO";
 				printf("About to send 'GO'\n");
-				rv = send(newsockfd, goString, sizeof(goString), 0); // send GO to client - Ready for RPS selection
-				if (rv < 0)
-					perror("Error sending to socket");
+				rv = send(newsockfd, goString, sizeof(goString), 0); 
 				printf("Sent 'GO'\n");
 				
+				//get choice from CLIENT
                 char choice[50];
                 rv = recv(newsockfd, choice, sizeof(choice), 0); // receive choice from client
 				printf("Choice received from client: %s\n", choice);
 				
+				//read PLAYER#
 				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent
 				
 				printf("Read from parent pipe: %s\n", uniq);
@@ -194,6 +195,8 @@ int main(int argc, char **argv)
 				rv = write(c2p[WRITE], nick, sizeof(nick)); //pipe choice to parent
 				
 				rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
+				
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
 				
 				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
 				
@@ -261,9 +264,10 @@ int main(int argc, char **argv)
 			for (int x = 0; x < numRounds; x++) {
 					char c1[10], c2[10];
 					char player1[50], player2[50];
+					int childNum = 1;
 					
-				for (int i=1; i<3; ++i){
-					if (i == 1){
+				for (int i=0; i<2; ++i){
+					if (childNum == 1){
 						rv = write(p2c[WRITE], "PLAYER1", 8);
 						
 						rv = read(c2p[READ], player1, sizeof(player1));
@@ -272,15 +276,17 @@ int main(int argc, char **argv)
 						rv = read(c2p[READ], c1, sizeof(c1));
 						
 						printf("Should be player1's move: %s\n", c1);
+						childNum = 2;
+						rv = write(p2c[WRITE], "FINISHED", 9);
 					}
-					if (i == 2){
+					if (childNum == 2){
 						rv = write(p2c[WRITE], "PLAYER2", 8);
 						rv = read(c2p[READ], player2, sizeof(player2));
 						
 						printf("Should be player2: %s\n", player1);
 						rv = read(c2p[READ], c2, sizeof(c2));
 						printf("Should be player1's move: %s\n", c2);
-						break;
+						rv = write(p2c[WRITE], "FINISHED", 9);
 					}
 				}
 				
@@ -312,6 +318,7 @@ int main(int argc, char **argv)
                         printf("Round Canceled: Invalid Entry");
                         break;
                 }
+				rv = write(p2c[WRITE], "FINISHED", 9);
             }
 			close(p2c[WRITE]);
 			close(c2p[READ]);
