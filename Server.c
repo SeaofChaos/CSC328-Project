@@ -19,15 +19,6 @@
 #define READ      0
 #define WRITE     1
 
-static int received = 0;
-
-void waitProcess(int signal){
-	if (signal == SIGUSR1)
-    {
-        received = 1;
-    }
-}
-
 int main(int argc, char **argv)
 {
   char *uniq;
@@ -74,21 +65,26 @@ int main(int argc, char **argv)
 	
 	for (;;)
     {
-		signal(SIGUSR1,waitProcess);
 		int scoreP1 = 0, scoreP2 = 0;
 		char uniq[50];
 		char nick1[50], nick2[50];
 		int pid;
 		int newsockfd;
-		int p2c[2], c2p[2];
+		int p2c[2], c2p[2], p2c2[2], c2p2[2]; //created extra pipe to add extra pipe to read information
 		
 		if (pipe(p2c) < 0) {
 			perror("Error creating pipe for parent to child:");
 			exit(-1);
-		}   // end if
-
-		// Create a second pipe to send data child to  parent
+		}   // end i
 		if (pipe(c2p) < 0) {
+			perror("Error creating pipe for child to parent:");
+			exit(-1);
+		}   // end if
+		if (pipe(c2p2) < 0) {
+			perror("Error creating pipe for child to parent:");
+			exit(-1);
+		}   // end if
+		if (pipe(p2c2) < 0) {
 			perror("Error creating pipe for child to parent:");
 			exit(-1);
 		}   // end if
@@ -121,7 +117,9 @@ int main(int argc, char **argv)
 			char nick[50];
 			
 			close(p2c[WRITE]); //close unneeded pipes
+			close(p2c2[WRITE]);
 			close(c2p[READ]);
+			close(c2p2[READ]);
 			
 			rv = send(newsockfd, ready, sizeof(ready), 0); // send ready string 
 			if (rv < 0)
@@ -140,10 +138,6 @@ int main(int argc, char **argv)
 			if (rv < 0)
 				perror("Error reading from parent pipe2");
 			
-			printf("uniq: %s\n", uniq);
-			
-			printf("value: %d\n", strcmp(uniq, "READY"));
-			
 			while (strcmp(uniq, "READY") != 0)
 			{
 				rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of RETRY response to client
@@ -158,26 +152,14 @@ int main(int argc, char **argv)
 				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read uniqueness response
 				if (rv < 0)
 						perror("Error reading from pipes6");
-				//printf("About to send to client: READY\n");
-				
 				rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of READY response to client
 				if (rv < 0)
 					perror("Error sending to socket7");
 			}
-			//sleep(0.5);
-			/*rv = write(c2p[WRITE], &uniq, sizeof(uniq));  // write nickname to parent
-			if (rv < 0)
-				perror("Error sending to socket7");
-			*/
-			//i don't know why this printf doesn't print, but we don't talk worry about it
-			//because it works :)
-			printf("About to send to client: %s\n", uniq);
 			
 			rv = send(newsockfd, uniq, sizeof(uniq), 0); // send uniq of READY response to client
 			if (rv < 0)
 				perror("Error sending to socket7");
-			
-			printf("Got past sending READY to client\n");
 			
 			//writing message back to parent that one child has received message
 			rv = write(c2p[WRITE], "RECEIVED", 9);  // write nickname to parent
@@ -196,40 +178,71 @@ int main(int argc, char **argv)
                 char choice[50];
                 rv = recv(newsockfd, choice, sizeof(choice), 0); // receive choice from client
 				printf("Choice received from client: %s\n", choice);
-				printf("uniq before reading PLAYER#: %s\n", uniq);
+				//printf("uniq before reading PLAYER#: %s\n", uniq);
 				//read PLAYER#
 				rv = write(c2p[WRITE], "START", 6); //pipe choice to parent
-				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent
+				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent (this doesn't matter)
 				
 				printf("Read from parent pipe: %s\n", uniq);
 				
-				rv = write(c2p[WRITE], &nick, sizeof(nick)); //pipe choice to parent
-				printf("goopy\n");
-				rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
-				printf("mommy\n");
-				
-				//while (rv > 0) rv = read(p2c[READ], &uniq, sizeof(uniq));
-				//while (received != 1);
-				
-				//rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
-				//printf("daddy\n");
-				
-				/*if (strcmp(uniq, nick)){
-					
-				}*/
-				
+				rv = write(c2p[WRITE], &nick, sizeof(nick)); //write nickname to parent
+				rv = write(c2p[WRITE], &choice, sizeof(choice)); //write choice to parent
+
 				//if (x < numRounds)
 					//send(newsockfd, "NEXT ROUND", 11, 0);
 				//else{
-					send(newsockfd, "SCORE", 6, 0);
+					send(newsockfd, "SCORE", 6, 0); //send score back to stop game
+					//send(newsockfd, "SCORE", 6, 0);
 					//break;
 				//}
 				//printf("ahhh\n");
 				//rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
             //}
 			
+			char winner[50];
+			char winnerScore[10];
+			char loser[50];
+			char loserScore[10];
+			
+			//read from a single write in the parent so only 1 child can execute this
+			printf("Child %s is trying to read from pipe", nick);
+			read(p2c2[READ], uniq, sizeof(uniq));
+			
+			//receive information from parent
+			read(p2c[READ], &winner, sizeof(winner));
+				printf("Winner received: %s\n", winner);
+			read(p2c[READ], &winnerScore, sizeof(winnerScore));
+				printf("Winner score received: %s\n", winnerScore);
+			read(p2c[READ], &loser, sizeof(loser));
+				printf("Loser received: %s\n", loser);
+			read(p2c[READ], &loserScore, sizeof(loserScore));
+				printf("Loser score received: %s\n", loserScore);
+			
+			write(c2p2[WRITE], nick, sizeof(nick));
+				printf("Finished reading information in player: %s\n", nick);
+			
+			printf("\nWinner name: %s\n", winner);
+			printf("Winner score: %s\n", winnerScore);
+			printf("Loser name: %s\n", loser);
+			printf("Loser score: %s\n\n", loserScore);
+			
+			///send information to client
+			send(newsockfd, winner, sizeof(winner), 0);
+			send(newsockfd, winnerScore, sizeof(winnerScore), 0);
+			send(newsockfd, loser, sizeof(loser), 0);
+			send(newsockfd, loserScore, sizeof(loserScore), 0);
+			rv = recv(newsockfd, uniq, sizeof(uniq), 0);
+			
+			printf("Should be DONE: %s\n", uniq);
+			
+			//make sure both children finish sending information before closing pipes
+			//IF A CHILD CLOSES THE PIPE, THE OTHER CHILD CANNOT READ FROM IT
+			read(p2c2[READ], uniq, sizeof(uniq));
+			
 			close(p2c[READ]); //close unneeded pipes
+			close(p2c2[READ]);
 			close(c2p[WRITE]);
+			close(c2p2[WRITE]);
 			close(sockfd);
 			close(newsockfd);
 			exit(0);
@@ -237,7 +250,9 @@ int main(int argc, char **argv)
 	  	else  // PARENT Process 
 		{
 			close(p2c[READ]); //close unneeded pipes
+			close(p2c2[READ]);
 			close(c2p[WRITE]);
+			close(c2p2[WRITE]);
 			
 			char *toSend = malloc(sizeof(char)*10);
 			int isReady = 0;
@@ -274,7 +289,7 @@ int main(int argc, char **argv)
 						rv = write(p2c[WRITE], toSend, sizeof(toSend));
 						if (rv < 0)
 							perror("Error writing to pipes15");
-						rv = read(c2p[READ], &nick1, sizeof(nick1)); //read nickname from client 1
+						rv = read(c2p[READ], &uniq, sizeof(uniq)); //read nickname from client 1
 					}
 				}
 			}
@@ -283,7 +298,7 @@ int main(int argc, char **argv)
 					char c1[10], c2[10];
 					char player1[50], player2[50];
 					//int childNum = 1;
-					
+				
 				for (int i=0; i<2; ++i){
 					rv = read(c2p[READ], uniq, sizeof(uniq));
 					if (i == 0){
@@ -313,8 +328,6 @@ int main(int argc, char **argv)
 					//childNum = 2;
 				}
 				
-				//kill(pid, SIGUSR1);
-				
 				printf("Player1 move: %s\nPlayer2 move: %s\n", c1, c2);
 				
                 int ref = decide(c1, c2);
@@ -325,26 +338,26 @@ int main(int argc, char **argv)
 						break;
 					}
                     case 1:{
-						printf("player1, nick: %s, %s\n", player1, nick);
+						printf("player1, nick1: %s, %s\n", player1, nick1);
 						if (strcmp(player1, nick1) == 0){
-							printf("Player1 wins\n");
+							printf("Player2 wins\n");
 							scoreP2++;
 						}
 						else{
 							scoreP1++;
-							printf("Player2 wins\n");
+							printf("Player1 wins\n");
 						}
 						break;
 					}
                     case 2:{
-						printf("player1, nick: %s, %s\n", player1, nick1);
+						printf("player1, nick1: %s, %s\n", player1, nick1);
                         if (strcmp(player1, nick1) == 0){
 							scoreP1++;
-							printf("Player2 wins\n");
+							printf("Player1 wins\n");
 						}
 						else{
 							scoreP2++;
-							printf("Player1 wins\n");
+							printf("Player2 wins\n");
 						}
 						break;
 					}
@@ -353,16 +366,104 @@ int main(int argc, char **argv)
                         break;
                 }
 				printf("player1 score: %d\nplayer2 score: %d\n", scoreP1, scoreP2);
-				/*if (scoreP1 > scoreP2)
-					printf("Player1 wins\n");
-				else if (scoreP1 == scoreP2)
-					printf("Tie\n");
-				else
-					printf("Loss\n");*/
-				//rv = write(p2c[WRITE], "FINISHED", 9);
+				
+				/*char* ok1[50], ok2[50];
+				printf("Waiting for OK from both children\n");
+				read(c2p2[READ], ok1, sizeof(ok1));
+				printf("Received %s from one child in c2p2 pipe\n", ok1);
+				read(c2p2[READ], ok2, sizeof(ok2));
+				printf("Received %s from one child in c2p2 pipe\n", ok2);
+				write(p2c2[WRITE], "OK", 3);
+				write(p2c2[WRITE], "OK1", 3);
+				printf("Sent OK to both child pipes to continue\n");*/
+				
+				//send final results
+				char winnerScore[10];
+				char loserScore[10];
+				
+				for (int i=0; i<2; ++i){  //iterate 2 times, one for each child depending read nickname
+					
+					//read(c2p2[READ], uniq, sizeof(uniq));
+					printf("Writing GO to p2c2 pipe.\n");
+					write(p2c2[WRITE], "GO", 3);
+					if (i == 0){ //communicating with only Player1 child
+						
+						if (scoreP1 > scoreP2){
+							//printf("Sending from else 2\n");
+							sprintf(winnerScore, "%d", scoreP1);
+							//printf("winnerScore: %s\n", winnerScore);
+							sprintf(loserScore, "%d", scoreP2);
+							//printf("loserScore: %s\n", loserScore);
+							//printf("Sending player1 to client: %s\n", player1);
+							write(p2c[WRITE], player1, sizeof(player1));  //send winner nickname
+							//printf("Sending winnerScore to client: %s\n", winnerScore);
+							write(p2c[WRITE], winnerScore, sizeof(winnerScore));
+							//printf("Sending player2 to client: %s\n", player2);
+							write(p2c[WRITE], player2, sizeof(player2));  //send loser nickname
+							//printf("Sending loserScore to client: %s\n", loserScore);
+							write(p2c[WRITE], loserScore, sizeof(loserScore));
+						}
+						else{
+							//printf("Sending from else 1\n");
+							sprintf(winnerScore, "%d", scoreP2);
+							//printf("winnerScore: %s\n", winnerScore);
+							sprintf(loserScore, "%d", scoreP1);
+							//printf("loserScore: %s\n", loserScore);
+							//printf("Sending player2 to client: %s\n", player2);
+							write(p2c[WRITE], player2, sizeof(player2));  //send winner nickname
+							//printf("Sending winnerScore to client: %s\n", winnerScore);
+							write(p2c[WRITE], winnerScore, sizeof(winnerScore));  //send winner score
+							//printf("Sending player1 to client: %s\n", player1);
+							write(p2c[WRITE], player1, sizeof(player1));  //send loser nickname
+							//printf("Sending loserScore to client: %s\n", loserScore);
+							write(p2c[WRITE], loserScore, sizeof(loserScore));  //send loser score
+						}
+					}
+					else { //communicating with only Player2 child
+						if (scoreP1 > scoreP2){
+							//printf("Sending from else 2\n");
+							sprintf(winnerScore, "%d", scoreP1);
+							//printf("winnerScore: %s\n", winnerScore);
+							sprintf(loserScore, "%d", scoreP2);
+							//printf("loserScore: %s\n", loserScore);
+							//printf("Sending player1 to client: %s\n", player1);
+							write(p2c[WRITE], player1, sizeof(player1));  //send winner nickname
+							//printf("Sending winnerScore to client: %s\n", winnerScore);
+							write(p2c[WRITE], winnerScore, sizeof(winnerScore));
+							//printf("Sending player2 to client: %s\n", player2);
+							write(p2c[WRITE], player2, sizeof(player2));  //send loser nickname
+							//printf("Sending loserScore to client: %s\n", loserScore);
+							write(p2c[WRITE], loserScore, sizeof(loserScore));
+						}
+						else {
+							//printf("Sending from else 1\n");
+							sprintf(winnerScore, "%d", scoreP2);
+							//printf("winnerScore: %s\n", winnerScore);
+							sprintf(loserScore, "%d", scoreP1);
+							//printf("loserScore: %s\n", loserScore);
+							//printf("Sending player2 to client: %s\n", player2);
+							write(p2c[WRITE], player2, sizeof(player2));  //send winner nickname
+							//printf("Sending winnerScore to client: %s\n", winnerScore);
+							write(p2c[WRITE], winnerScore, sizeof(winnerScore));  //send winner score
+							//printf("Sending player1 to client: %s\n", player1);
+							write(p2c[WRITE], player1, sizeof(player1));  //send loser nickname
+							//printf("Sending loserScore to client: %s\n", loserScore);
+							write(p2c[WRITE], loserScore, sizeof(loserScore));  //send loser score
+						}
+					}
+					//rv = read(c2p[READ], uniq, sizeof(uniq));*/
+					printf("Checking if first child is done.\n");
+					read(c2p2[READ], uniq, sizeof(uniq));
+					printf("First child is done, received: %s\n", uniq);
+				}
+			
+			write(p2c[WRITE], "DONE", 5);
+			write(p2c[WRITE], "DONE", 5);
             //}
 			close(p2c[WRITE]);
+			close(p2c2[WRITE]);
 			close(c2p[READ]);
+			close(c2p2[READ]);
 		} //end else
 		if (wait(NULL) < -1)
 			perror("Error in wait: ");
