@@ -18,7 +18,16 @@
 #define MAXLINE 512
 #define READ      0
 #define WRITE     1
- 
+
+static int received = 0;
+
+void waitProcess(int signal){
+	if (signal == SIGUSR1)
+    {
+        received = 1;
+    }
+}
+
 int main(int argc, char **argv)
 {
   char *uniq;
@@ -65,6 +74,7 @@ int main(int argc, char **argv)
 	
 	for (;;)
     {
+		signal(SIGUSR1,waitProcess);
 		int scoreP1 = 0, scoreP2 = 0;
 		char uniq[50];
 		char nick1[50], nick2[50];
@@ -175,7 +185,7 @@ int main(int argc, char **argv)
 					perror("Error writing to pipes5");
 			
 			//play game
-            for (int x = 0; x < numRounds; x++) {
+            //for (int x = 0; x < numRounds; x++) {
 				// send GO to client - Ready for RPS selection
                 char* goString = "GO";
 				printf("About to send 'GO'\n");
@@ -186,29 +196,37 @@ int main(int argc, char **argv)
                 char choice[50];
                 rv = recv(newsockfd, choice, sizeof(choice), 0); // receive choice from client
 				printf("Choice received from client: %s\n", choice);
-				
+				printf("uniq before reading PLAYER#: %s\n", uniq);
 				//read PLAYER#
+				rv = write(c2p[WRITE], "START", 6); //pipe choice to parent
 				rv = read(p2c[READ], &uniq, sizeof(uniq)); //read PLAYER# from parent
 				
 				printf("Read from parent pipe: %s\n", uniq);
 				
-				rv = write(c2p[WRITE], nick, sizeof(nick)); //pipe choice to parent
-				
+				rv = write(c2p[WRITE], &nick, sizeof(nick)); //pipe choice to parent
+				printf("goopy\n");
 				rv = write(c2p[WRITE], &choice, sizeof(choice)); //pipe choice to parent
+				printf("mommy\n");
 				
-				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+				//while (rv > 0) rv = read(p2c[READ], &uniq, sizeof(uniq));
+				//while (received != 1);
 				
-				rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+				//rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+				//printf("daddy\n");
 				
-				printf("Read from parent pipe2: %s\n", uniq);
+				/*if (strcmp(uniq, nick)){
+					
+				}*/
 				
-				if (x < numRounds)
-					send(newsockfd, "NEXT ROUND", 11, 0);
-				else{
+				//if (x < numRounds)
+					//send(newsockfd, "NEXT ROUND", 11, 0);
+				//else{
 					send(newsockfd, "SCORE", 6, 0);
-					break;
-				}
-            }
+					//break;
+				//}
+				//printf("ahhh\n");
+				//rv = read(p2c[READ], &uniq, sizeof(uniq)); //make sure both children are done
+            //}
 			
 			close(p2c[READ]); //close unneeded pipes
 			close(c2p[WRITE]);
@@ -261,65 +279,88 @@ int main(int argc, char **argv)
 				}
 			}
 			
-			for (int x = 0; x < numRounds; x++) {
+			//for (int x = 0; x < numRounds; x++) {
 					char c1[10], c2[10];
 					char player1[50], player2[50];
-					int childNum = 1;
+					//int childNum = 1;
 					
 				for (int i=0; i<2; ++i){
-					if (childNum == 1){
+					rv = read(c2p[READ], uniq, sizeof(uniq));
+					if (i == 0){
+						printf("getting player1 information:\n");
+						printf("before PLAYER1 write\n");
 						rv = write(p2c[WRITE], "PLAYER1", 8);
-						
+						printf("Read player1 nick\n");
 						rv = read(c2p[READ], player1, sizeof(player1));
 						
 						printf("Should be player1: %s\n", player1);
 						rv = read(c2p[READ], c1, sizeof(c1));
 						
 						printf("Should be player1's move: %s\n", c1);
-						childNum = 2;
-						rv = write(p2c[WRITE], "FINISHED", 9);
 					}
-					if (childNum == 2){
+					if (i == 1){
+						rv = read(c2p[READ], uniq, sizeof(uniq));
+						printf("getting player2 information:\n");
+						printf("before PLAYER2 write\n");
 						rv = write(p2c[WRITE], "PLAYER2", 8);
+						printf("Read player2 nick\n");
 						rv = read(c2p[READ], player2, sizeof(player2));
 						
-						printf("Should be player2: %s\n", player1);
+						printf("Should be player2: %s\n", player2);
 						rv = read(c2p[READ], c2, sizeof(c2));
-						printf("Should be player1's move: %s\n", c2);
-						rv = write(p2c[WRITE], "FINISHED", 9);
+						printf("Should be player2's move: %s\n", c2);
 					}
+					//childNum = 2;
 				}
+				
+				//kill(pid, SIGUSR1);
 				
 				printf("Player1 move: %s\nPlayer2 move: %s\n", c1, c2);
 				
                 int ref = decide(c1, c2);
+				printf("ref: %d\n", ref);
                 switch (ref) { //scoring
-                    case '0':
+                    case 0:{
                         printf("It's a tie.\n");
-                    case '1':
+						break;
+					}
+                    case 1:{
+						printf("player1, nick: %s, %s\n", player1, nick);
 						if (strcmp(player1, nick1) == 0){
 							printf("Player1 wins\n");
-							scoreP1++;
+							scoreP2++;
 						}
 						else{
-							scoreP2++;
+							scoreP1++;
 							printf("Player2 wins\n");
 						}
-                    case '2':
+						break;
+					}
+                    case 2:{
+						printf("player1, nick: %s, %s\n", player1, nick1);
                         if (strcmp(player1, nick1) == 0){
-							scoreP2++;
+							scoreP1++;
 							printf("Player2 wins\n");
 						}
 						else{
-							scoreP1++;
+							scoreP2++;
 							printf("Player1 wins\n");
 						}
-                    case '4':
+						break;
+					}
+                    case 4:
                         printf("Round Canceled: Invalid Entry");
                         break;
                 }
-				rv = write(p2c[WRITE], "FINISHED", 9);
-            }
+				printf("player1 score: %d\nplayer2 score: %d\n", scoreP1, scoreP2);
+				/*if (scoreP1 > scoreP2)
+					printf("Player1 wins\n");
+				else if (scoreP1 == scoreP2)
+					printf("Tie\n");
+				else
+					printf("Loss\n");*/
+				//rv = write(p2c[WRITE], "FINISHED", 9);
+            //}
 			close(p2c[WRITE]);
 			close(c2p[READ]);
 		} //end else
