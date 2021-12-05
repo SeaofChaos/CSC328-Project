@@ -65,7 +65,12 @@ How to run the client:
 
 ### Defined Protocol
 - TCP/IP
-- *need information here*
+- We do not check if full message is received or not using null terminator or endline
+- Upon Client Connection Server Waits for 2 connections before prompting each user for their username
+- Server Asks Client for Username
+- Client waits for uniqueness response 
+- Client plays RPS iterations
+- Client Receives SCORE String, final score, and winner
 
 ### Assumptions
   1. Only two clients will be accepted at a time. 
@@ -75,10 +80,11 @@ How to run the client:
   4. 
 
 ### Discussions throughout development process
-  - *need information here*
+  - Major Issue: Trying to use same children to handle all accepted connections, received Bad file descriptor error upon accepting a new connection. Created new child processes and socket file descriptors for each new connection
+  - Major Issue: Game round iteration. Unresolved.
   
 ### Status
-  - Currently, our client/server program can run an entire game of rock, paper, scissors between two clients.
+  - Currently, our client/server program can run an entire game of rock, paper, scissors between two clients while running.
   - Our server can successfully run as a daemon server as long as the assumptions are followed. Specifically,
         our server will not operate correctly if assumption 2 is not followed by the user. If a connection is
         forcefully exited during the game, the server cannot handle it and will not allow any games to continue.
