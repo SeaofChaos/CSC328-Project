@@ -117,6 +117,10 @@ int main(int argc, char* argv[]){
 	
 	while (keepPlaying == 'y'){  //game loop
 		char *toSend[50];
+		char winnerScore[10];
+		char loserScore[10];
+		char winner[50];
+		char loser[50];
 		
 		getNickName(sockfd); //gets a unique nickname
 		
@@ -134,8 +138,30 @@ int main(int argc, char* argv[]){
 			if (recv(sockfd, &received, sizeof(received), 0) < 0){
 				printf("Unable to read data from server\n");
 			}
-			printf("received: %s\n", received);
+			printf("Received SCORE?: %s\n", received);
 		}
+		
+		if (recv(sockfd, &winner, sizeof(winner), 0) < 0){
+				printf("Unable to read data from server\n");
+		}
+		printf("winner: %s\n", winner);
+		if (recv(sockfd, &winnerScore, sizeof(winnerScore), 0) < 0){
+				printf("Unable to read data from server\n");
+		}
+		printf("winnerScore: %s\n", winnerScore);
+		if (recv(sockfd, &loser, sizeof(loser), 0) < 0){
+				printf("Unable to read data from server\n");
+		}
+		printf("loser: %s\n", loser);
+		if (recv(sockfd, &loserScore, sizeof(loserScore), 0) < 0){
+				printf("Unable to read data from server\n");
+		}
+		printf("loserScore: %s\n", loserScore);
+		
+		if (send(sockfd, "DONE", 5, 0) < 0){
+			printf("Unable to send data to server\n");
+		}
+		
 		keepPlaying = 'n';
 		/*printf("Would you like to play again? (y/n): ");
 		scanf("%c", toSend);
