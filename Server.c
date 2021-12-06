@@ -46,40 +46,44 @@ int main(int argc, char **argv)
   int sockfd, rv;
   int numChild = 0;
   
-  if (argc < 2) //usage clause
+	if (argc < 2) //usage clause
     {
-      printf("\nusage: %s <number of rounds> <port number>(optional) \n\n", argv[0]);
-      exit(1);
+		printf("\nusage: %s <number of rounds> <port number>(optional) \n\n", argv[0]);
+		exit(1);
     }
-  int numRounds = atoi(argv[1]); // set number of rounds 
-  printf("numRounds: %d\n", numRounds);
-  if (argv[2] != NULL) // Set port if user entered 2nd CLA
+	int numRounds = atoi(argv[1]); // set number of rounds 
+	printf("numRounds: %d\n", numRounds);
+	if (argv[2] != NULL) // Set port if user entered 2nd CLA
     {
-      PORT = atoi(argv[2]);
+		PORT = atoi(argv[2]);
+		if (checkPort(PORT) == 0){
+			printf("Port must be in range 1024-49151\n");
+			exit(1);
+		}
     }
   
-  struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
+	struct sockaddr_in server = {AF_INET, htons(PORT) ,INADDR_ANY};
   
-  // set up the transport end point
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	// set up the transport end point
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-      perror("socket call failed");
-      exit(-1);
-    }   // end if
+		perror("socket call failed");
+		exit(-1);
+    }
   
-  // bind and address to the end point
-  if (bind(sockfd, (struct sockaddr *)&server, SIZE) == -1)
+	// bind and address to the end point
+	if (bind(sockfd, (struct sockaddr *)&server, SIZE) == -1)
     {
-      perror("bind call failed");
-      exit(-1);
-    }   // end if bind
+		perror("bind call failed");
+		exit(-1);
+    }
   
-  // start listening for incoming connections
-  if (listen(sockfd, 5) == -1)
+	// start listening for incoming connections
+	if (listen(sockfd, 5) == -1)
     {
-      perror("listen call failed");
-      exit(-1);
-    }   // end if
+		perror("listen call failed");
+		exit(-1);
+    }
 	
 	for (;;)
     {
@@ -88,7 +92,7 @@ int main(int argc, char **argv)
 		char nick1[50], nick2[50];
 		int pid;
 		int newsockfd;
-		int p2c[2], c2p[2], p2c2[2], c2p2[2]; //created extra pipe to add extra pipe to read information
+		int p2c[2], c2p[2], p2c2[2], c2p2[2]; //created extra pipe to allow parent to keep the children in order
 		
 		if (pipe(p2c) < 0) {
 			perror("Error creating pipe for parent to child:");
@@ -107,6 +111,7 @@ int main(int argc, char **argv)
 			exit(-1);
 		}   // end if
 		
+		//create child processes
 		if ((pid = fork()) == -1)
 		{
 			perror("fork failed");
@@ -289,8 +294,6 @@ int main(int argc, char **argv)
 			
 			printf("Should be DONE: %s\n", uniq);
 			
-			//make sure both children finish sending information before closing pipes
-			//IF A CHILD CLOSES THE PIPE, THE OTHER CHILD CANNOT READ FROM IT
 			rv = read(p2c2[READ], uniq, sizeof(uniq));
 			if (rv < 0)
 				perror("Error reading from parent pipe");
@@ -346,14 +349,15 @@ int main(int argc, char **argv)
 						if (rv < 0)
 							perror("Error writing to pipes15");
 						rv = read(c2p[READ], &uniq, sizeof(uniq)); //read nickname from client 1
+						if (rv < 0)
+							perror("Error writing to pipes15");
 					}
 				}
 			}
 			
-			//for (int x = 0; x < numRounds; x++) {
-					char c1[10], c2[10];
-					char player1[50], player2[50];
-					//int childNum = 1;
+				char c1[10], c2[10];
+				char player1[50], player2[50];
+				//int childNum = 1;
 				
 				for (int i=0; i<2; ++i){
 					rv = read(c2p[READ], uniq, sizeof(uniq));
@@ -437,23 +441,11 @@ int main(int argc, char **argv)
                 }
 				printf("player1 score: %d\nplayer2 score: %d\n", scoreP1, scoreP2);
 				
-				/*char* ok1[50], ok2[50];
-				printf("Waiting for OK from both children\n");
-				rv = read(c2p2[READ], ok1, sizeof(ok1));
-				printf("Received %s from one child in c2p2 pipe\n", ok1);
-				rv = read(c2p2[READ], ok2, sizeof(ok2));
-				printf("Received %s from one child in c2p2 pipe\n", ok2);
-				rv = write(p2c2[WRITE], "OK", 3);
-				rv = write(p2c2[WRITE], "OK1", 3);
-				printf("Sent OK to both child pipes to continue\n");*/
-				
-				//send final results
 				char winnerScore[10];
 				char loserScore[10];
 				
 				for (int i=0; i<2; ++i){  //iterate 2 times, one for each child depending read nickname
 					
-					//rv = read(c2p2[READ], uniq, sizeof(uniq));
 					printf("Writing GO to p2c2 pipe.\n");
 					rv = write(p2c2[WRITE], "GO", 3);
 					if (rv < 0)
@@ -461,47 +453,33 @@ int main(int argc, char **argv)
 					if (i == 0){ //communicating with only Player1 child
 						
 						if (scoreP1 > scoreP2){
-							//printf("Sending from else 2\n");
 							sprintf(winnerScore, "%d", scoreP1);
-							//printf("winnerScore: %s\n", winnerScore);
 							sprintf(loserScore, "%d", scoreP2);
-							//printf("loserScore: %s\n", loserScore);
-							//printf("Sending player1 to client: %s\n", player1);
 							rv = write(p2c[WRITE], player1, sizeof(player1));  //send winner nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending winnerScore to client: %s\n", winnerScore);
 							rv = write(p2c[WRITE], winnerScore, sizeof(winnerScore));
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending player2 to client: %s\n", player2);
 							rv = write(p2c[WRITE], player2, sizeof(player2));  //send loser nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending loserScore to client: %s\n", loserScore);
 							rv = write(p2c[WRITE], loserScore, sizeof(loserScore));
 							if (rv < 0)
 								perror("Error writing to pipes");
 						}
 						else{
-							//printf("Sending from else 1\n");
 							sprintf(winnerScore, "%d", scoreP2);
-							//printf("winnerScore: %s\n", winnerScore);
 							sprintf(loserScore, "%d", scoreP1);
-							//printf("loserScore: %s\n", loserScore);
-							//printf("Sending player2 to client: %s\n", player2);
 							rv = write(p2c[WRITE], player2, sizeof(player2));  //send winner nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending winnerScore to client: %s\n", winnerScore);
 							rv = write(p2c[WRITE], winnerScore, sizeof(winnerScore));  //send winner score
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending player1 to client: %s\n", player1);
 							rv = write(p2c[WRITE], player1, sizeof(player1));  //send loser nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending loserScore to client: %s\n", loserScore);
 							rv = write(p2c[WRITE], loserScore, sizeof(loserScore));  //send loser score
 							if (rv < 0)
 								perror("Error writing to pipes");
@@ -509,47 +487,33 @@ int main(int argc, char **argv)
 					}
 					else { //communicating with only Player2 child
 						if (scoreP1 > scoreP2){
-							//printf("Sending from else 2\n");
 							sprintf(winnerScore, "%d", scoreP1);
-							//printf("winnerScore: %s\n", winnerScore);
 							sprintf(loserScore, "%d", scoreP2);
-							//printf("loserScore: %s\n", loserScore);
-							//printf("Sending player1 to client: %s\n", player1);
 							rv = write(p2c[WRITE], player1, sizeof(player1));  //send winner nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending winnerScore to client: %s\n", winnerScore);
 							rv = write(p2c[WRITE], winnerScore, sizeof(winnerScore));
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending player2 to client: %s\n", player2);
 							rv = write(p2c[WRITE], player2, sizeof(player2));  //send loser nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending loserScore to client: %s\n", loserScore);
 							rv = write(p2c[WRITE], loserScore, sizeof(loserScore));
 							if (rv < 0)
 								perror("Error writing to pipes");
 						}
 						else {
-							//printf("Sending from else 1\n");
 							sprintf(winnerScore, "%d", scoreP2);
-							//printf("winnerScore: %s\n", winnerScore);
 							sprintf(loserScore, "%d", scoreP1);
-							//printf("loserScore: %s\n", loserScore);
-							//printf("Sending player2 to client: %s\n", player2);
 							rv = write(p2c[WRITE], player2, sizeof(player2));  //send winner nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending winnerScore to client: %s\n", winnerScore);
 							rv = write(p2c[WRITE], winnerScore, sizeof(winnerScore));  //send winner score
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending player1 to client: %s\n", player1);
 							rv = write(p2c[WRITE], player1, sizeof(player1));  //send loser nickname
 							if (rv < 0)
 								perror("Error writing to pipes");
-							//printf("Sending loserScore to client: %s\n", loserScore);
 							rv = write(p2c[WRITE], loserScore, sizeof(loserScore));  //send loser score
 							if (rv < 0)
 								perror("Error writing to pipes");
