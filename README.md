@@ -58,10 +58,10 @@ How to run the client:
 | --------------------- | ------------- | --------------------- | ----------------- |
 |       Client.c        |       Y       |           Y           |         Y         |
 |       Server.c        |       Y       |           Y           |         Y         |
-|       Library.c       |       Y       |           Y           |         Y         |
-|        readme         |       Y       |           N           |         N         |
+|       Library.c       |       Y       |           N           |         Y         |
+|        readme         |       Y       |           Y           |         N         |
 |       makefile        |       Y       |           N           |         N         |
-| Updated Project Plan  |       Y       |           Y           |         Y         |
+| Updated Project Plan  |       N       |           Y           |         N         |
 
 ### Defined Protocol
 - TCP/IP
@@ -69,7 +69,7 @@ How to run the client:
 - Upon Client Connection Server Waits for 2 connections before prompting each user for their username
 - Server Asks Client for Username
 - Client waits for uniqueness response 
-- Client plays RPS iterations
+- Client plays RPS game
 - Client Receives SCORE String, final score, and winner
 
 ### Assumptions
@@ -82,9 +82,10 @@ How to run the client:
 ### Discussions throughout development process
   - Major Issue: Trying to use same children to handle all accepted connections, received Bad file descriptor error upon accepting a new connection. Created new child processes and socket file descriptors for each new connection
   - Major Issue: Game round iteration. Unresolved.
+  - Major Issue: Tracking and Reading back Scores. Resolved by sending nickname along with choices, checking against nick
   
 ### Status
-  - Currently, our client/server program can run an entire game of rock, paper, scissors between two clients while running.
+  - Currently, our client/server program can run infinite 1 round games of rock, paper, scissors between two clients while the server is running.
   - Our server can successfully run as a daemon server as long as the assumptions are followed. Specifically,
         our server will not operate correctly if assumption 2 is not followed by the user. If a connection is
         forcefully exited during the game, the server cannot handle it and will not allow any games to continue.
