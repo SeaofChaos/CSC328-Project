@@ -92,6 +92,11 @@ int main(int argc, char* argv[]){
 	char* port = "7006";
 	
 	if (argc == 3){	//is port specified?
+		int numPort = atoi(argv[2]);
+		if (checkPort(numPort) == 0){
+			printf("Port must be in range 1024-49151\n");
+			exit(1);
+		}
 		port = argv[2];
 	}
 	
