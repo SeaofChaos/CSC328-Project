@@ -1,3 +1,24 @@
+// Authors: Ryan Quinn, Cameron Christopher, Christian Kiriluk
+
+//Major: Computer Science
+
+//Creation Date: November 30, 2021
+
+//Due Date: December 2, 2021
+
+//Course: CSC328
+
+//Filename: Server.c
+
+//Professor: Dr. Frye
+
+//Assignment: RPS Project
+
+//Purpose: This assignment contains a server/client program that runs a game of rock paper scissors between two users.
+
+// Compile: make
+// Execute: ./server <number of rounds> <(optional) port number>
+
 //0 draw 
 //1 p1 wins
 //2 p2 wins
@@ -51,14 +72,14 @@ int decide(char* p1, char* p2)
 /* Return Value: int - the port given if valid or a defualt port if it is invalid  */
 /* */
 /*************************************************************************/
-int checkPort(int givenPort)
-{
-    if(givenPort<1024||givenPort>49151)
-        return defaultPort();
+//int checkPort(int givenPort)
+//{
+//  if(givenPort<1024||givenPort>49151)
+//      return defaultPort();
  
-    else 
-        return givenPort;
-}
+//  else 
+//      return givenPort;
+//}
 
 /*************************************************************************/
 /* */
@@ -67,10 +88,10 @@ int checkPort(int givenPort)
 /* Return Value: int -a port number  */
 /* */
 /*************************************************************************/
-int defaultPort()
-{
-return 7011;
-}
+//int defaultPort()
+//{
+//return 7011;
+//}
 
 /*************************************************************************/
 /* */
@@ -78,43 +99,43 @@ return 7011;
 /* Description: prints error then exits*/
 /* */
 /*************************************************************************/
-void socketFail()
-{
-	perror("Socket call failed");
-	exit(1);
-}
+//void socketFail()
+//{
+//	perror("Socket call failed");
+//	exit(1);
+//}
 
 
 
-char *  sendFail()
-{
-	perror("Failed to send message");
-	exit(1);
-	
-}
+//char *  sendFail()
+//{
+//	perror("Failed to send message");
+//	exit(1);
+//	
+//}
 
 
-char *  send(char * toSend)
-{	
-	int rv = send(newsockfd, ready, 50, 0); // send ready string 
-	      if (rv < 0)
-		perror("Error sending to socket");
+//char *  send(char * toSend)
+//{	
+//	int rv = send(newsockfd, ready, 50, 0); // send ready string 
+//	      if (rv < 0)
+//		perror("Error sending to socket");
 	      
-	      rv = recv(newsockfd, toSend, 50,0); // receive nickname from client
-	      if (rv < 0)
-		perror("Error receiving from socket");
-}
+//	      rv = recv(newsockfd, toSend, 50,0); // receive nickname from client
+//	      if (rv < 0)
+//		perror("Error receiving from socket");
+//}
 
 
-void createSock(int sockfd)
-{
-	if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
-		socketFail()
-	
-	if (connect(sockfd, result->ai_addr, result->ai_addrlen) == -1)
-		socketFail()
-}
+//void createSock(int sockfd)
+//{
+//	if ((sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == -1)
+//socketFail()
+		//	
+//	if (connect(sockfd, result->ai_addr, result->ai_addrlen) == -1)
+//		socketFail()
+//}
 
 
-);
-}
+//);
+//}
