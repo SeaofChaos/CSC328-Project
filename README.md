@@ -58,7 +58,7 @@ How to run the client:
 | --------------------- | ------------- | --------------------- | ----------------- |
 |       Client.c        |       Y       |           Y           |         Y         |
 |       Server.c        |       Y       |           Y           |         Y         |
-|       Library.c       |       Y       |           N           |         Y         |
+|       Library.c       |       N       |           N           |         Y         |
 |        readme         |       Y       |           Y           |         N         |
 |       makefile        |       Y       |           N           |         N         |
 | Updated Project Plan  |       N       |           Y           |         N         |
